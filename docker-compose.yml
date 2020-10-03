@@ -1,0 +1,21 @@
+version: '3.7'
+
+networks:
+  apigateway:
+    ipam:
+      config:
+        - subnet: 172.45.0.0/24
+
+services:
+  apigateway:
+    ports:
+      - '9080:9080'
+      - '9443:9443'
+    image: apisix-gateway
+    volumes:
+      - ./logs:/usr/local/apisix/logs
+      - ./conf/config.yaml:/usr/local/apisix/conf/config.yaml
+      - ./lua:/usr/local/apisix/lua
+    networks:
+      apigateway:
+        ipv4_address: 172.45.0.3

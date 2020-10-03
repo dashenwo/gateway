@@ -1,0 +1,1 @@
+return require "apisix.lib.session-auth-auth.encoders.base16"
