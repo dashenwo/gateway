@@ -1,5 +1,5 @@
 local tonumber = tonumber
-local random   = require "resty.random".bytes
+local random = require "resty.random"
 local var      = ngx.var
 
 local defaults = {

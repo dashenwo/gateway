@@ -68,7 +68,6 @@ return function(proto, service, method, pb_option)
         end
 
         ngx.arg[1] = response
-        core.log.error("这是打印的返回消息：",response);
     end
 
 end

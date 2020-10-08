@@ -1,7 +1,7 @@
 local require      = require
 
 local random       = require "resty.random"
-
+local json = require("cjson.safe")
 local ngx          = ngx
 local var          = ngx.var
 local time         = ngx.time
@@ -293,7 +293,7 @@ end
 
 local function save(session, close)
     session.expires = session.now + session.cookie.lifetime
-    ngx.log(ngx.ERR,"这是打印的当前时间：",session.now,"，这是打印的存活时间",session.cookie.lifetime)
+
     set_usebefore(session)
     local cookie, err = session.strategy.save(session, close)
     if not cookie then
@@ -334,8 +334,8 @@ local function regenerate(session, flush)
     if flush then
         session.data = {}
     end
-
     session.id = session:identifier()
+    ngx.log(ngx.ERR,"这里是第一次生成id，数据为",session.id)
 end
 
 local secret = bytes(32, true) or bytes(32)
@@ -387,7 +387,6 @@ end
 function session:parse_cookie(value)
     local cookie
     local cookie_parts = COOKIE_PARTS[self.cookie.storage] or COOKIE_PARTS.DEFAULT
-
     local count = 1
     local pos   = 1
 
@@ -403,6 +402,7 @@ function session:parse_cookie(value)
         if count == 2 then
             local cookie_part = sub(value, pos, p_pos - 1)
             local c_pos = find(cookie_part, ":", 2, true)
+
             if c_pos then
                 cookie.expires = tonumber(sub(cookie_part, 1, c_pos - 1), 10)
                 if not cookie.expires then
@@ -436,6 +436,7 @@ function session:parse_cookie(value)
         p_pos = find(value, "|", pos, true)
     end
 
+
     if count ~= cookie_parts.n then
         return nil, "invalid number of session cookie parts"
     end
@@ -448,7 +449,7 @@ function session:parse_cookie(value)
     end
 
     cookie[name] = cookie_part
-
+    ngx.log(ngx.ERR,"这是获取到的没有base64的数据id是：",cookie.id)
     if not cookie.id then
         return nil, "missing session cookie id"
     end
@@ -456,7 +457,6 @@ function session:parse_cookie(value)
     if not cookie.expires then
         return nil, "missing session cookie expiry"
     end
-
     if cookie.expires <= self.now then
         return nil, "session cookie has expired"
     end
@@ -590,7 +590,6 @@ function session.open(opts)
     local cookie = self:get_cookie()
     if cookie then
         cookie, err = self:parse_cookie(cookie)
-
         if cookie then
             local ok
             ok, err = self.strategy.open(self, cookie)
@@ -614,7 +613,6 @@ function session.start(opts)
 
     local self, present, reason = session.open(opts)
     self.started = true
-
     if not present then
         local ok, err = save(self)
         if not ok then
@@ -629,7 +627,6 @@ function session.start(opts)
             return nil, err or "unable to start session"
         end
     end
-
     if self.expires - self.now < self.cookie.renew
             or self.expires > self.now + self.cookie.lifetime
     then
@@ -639,6 +636,7 @@ function session.start(opts)
         end
     else
         -- we're not saving, so we must touch to update idletime/usebefore
+
         local ok, err = touch(self)
         if not ok then
             return nil, err or "unable to touch session cookie"
