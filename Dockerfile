@@ -9,6 +9,7 @@ RUN set -x \
     pkgconfig \
     cmake \
     git \
+    && echo -e `199.232.68.133 raw.githubusercontent.com\n199.232.68.133 user-images.githubusercontent.com\n199.232.68.133 avatars2.githubusercontent.com\n199.232.68.133 avatars1.githubusercontent.com` >> /etc/host \
     && luarocks install https://github.com/apache/apisix/raw/master/rockspec/apisix-master-0.rockspec --tree=/usr/local/apisix/deps \
     && cp -v /usr/local/apisix/deps/lib/luarocks/rocks-5.1/apisix/master-0/bin/apisix /usr/bin/ \
     && bin='#! /usr/local/openresty/luajit/bin/luajit\npackage.path = "/usr/local/apisix/?.lua;" .. package.path' \
