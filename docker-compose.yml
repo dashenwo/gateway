@@ -9,8 +9,8 @@ networks:
 services:
   apigateway:
     ports:
-      - '9080:9080'
-      - '9443:9443'
+      - '80:9080'
+      - '443:9443'
     image: apisix-gateway
     volumes:
       - ./logs:/usr/local/apisix/logs

@@ -22,6 +22,7 @@ description = {
 
 dependencies = {
   "lua-resty-redis-cluster = 1.1-0",
+  "lua-resty-cookie = 0.1.0-1"
 }
 build = {
    type = "builtin",
