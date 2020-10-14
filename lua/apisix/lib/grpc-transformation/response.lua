@@ -60,8 +60,12 @@ return function(proto, service, method, pb_option)
             ngx.arg[1] = "failed to decode response data by protobuf"
             return "failed to decode response data by protobuf"
         end
-
-        local response, err = core.json.encode(decoded)
+        local res = {
+            code=0,
+            msg="success",
+            data=decoded,
+        }
+        local response, err = core.json.encode(res)
         if not response then
             core.log.error("failed to call json_encode data: ", err)
             response = "failed to json_encode response body"

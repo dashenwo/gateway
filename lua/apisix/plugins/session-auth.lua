@@ -9,26 +9,28 @@ local schema = {
     type = "object",
     properties = {
         --存储驱动前缀
-        prefix = {type="string",minimum = 1, default = "sessions"},
+        prefix = {type="string",minimum = 1, default = "sessions",title="存储前缀"},
         --加密字符串
-        secret={type="string",minLength=1,},
+        secret={type="string",minLength=1,title="密匙"},
         --前缀
-        name = {type="string",minimum = 1, default = "session_id"},
-        --session过期时间
-        expire = {type = "integer", minimum = 1,default = 3600},
+        name = {type="string",minimum = 1, default = "session_id",title="session名称"},
+        --是否必须验证登录
+        must = {type="boolean", default = true,title ="必须登录"},
         --redis请求超时时间
         timeout = {
             type = "integer", minimum = 1,
             default = 1000,
+            title ="请求超时"
         },
         storage = {
             type = "string",
             enum = {"redis", "memcache"},
             default = "redis",
+            title ="存储驱动"
         },
-        password = {type="string",minLength = 0,},
+        password = {type="string",minLength = 0,title="存储驱动密码（如redis的密码）"},
     },
-    required = {"name","prefix","expire","timeout","storage","secret"},
+    required = {"name","prefix","timeout","storage","secret","must"},
     dependencies = {
         storage = {
             oneOf = {
@@ -100,9 +102,9 @@ do
             config.redis = {
                 prefix = conf.prefix,
                 auth = conf.password,
-                connect_timeout = 1000,
-                read_timeout =1000,
-                send_timeout=1000,
+                connect_timeout = conf.timeout,
+                read_timeout =conf.timeout,
+                send_timeout=conf.timeout,
                 pool = {
                     name = "sessions",
                     timeout = 60000,
@@ -122,7 +124,9 @@ do
         elseif conf.storage=="memcache" then
         end
         local session = manager.start(config)
-        if not session.data.jwt then
+        --如果该api限制必须登录使用，但又没有登录则给出提示
+        core.log.error(conf.must)
+        if conf.must and not session.data.jwt then
             return 200,messages.logout
         end
         -- 解析

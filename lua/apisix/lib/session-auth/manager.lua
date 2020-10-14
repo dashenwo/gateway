@@ -21,6 +21,22 @@ local function prequire(prefix, package, default)
 
     return module, package
 end
+local  function split(szFullString, szSeparator)
+    local nFindStartIndex = 1
+    local nSplitIndex = 1
+    local nSplitArray = {}
+    while true do
+        local nFindLastIndex = string.find(szFullString, szSeparator, nFindStartIndex)
+        if not nFindLastIndex then
+            nSplitArray[nSplitIndex] = string.sub(szFullString, nFindStartIndex, string.len(szFullString))
+            break
+        end
+        nSplitArray[nSplitIndex] = string.sub(szFullString, nFindStartIndex, nFindLastIndex - 1)
+        nFindStartIndex = nFindLastIndex + string.len(szSeparator)
+        nSplitIndex = nSplitIndex + 1
+    end
+    return nSplitArray
+end
 local session = {
     _VERSION = "1.0"
 }
@@ -45,8 +61,6 @@ function session.new(opts)
     self.storage = sto.new(opts[opts.storage])
     return setmetatable(self, session)
 end
-
-
 function session.start(opts)
     local self = opts
     if getmetatable(self) == session then
@@ -59,14 +73,20 @@ function session.start(opts)
     self.now = time()
     local cookie = self.cookie:get(self.name)
     if cookie then
-        self.id = cookie
-        local  data = self.storage:open(self.id)
-        if data then
-            --    解析数据
-            local decodeData = self.encoder.decode(data)
-            self.data = self.serializer.deserialize(decodeData);
-        else
-            self.data = {}
+        --解析cookie
+        local cookied = self.encoder.decode(cookie)
+        local list = split(cookied,"|")
+        if #list > 1 then
+            local idArr = {list[2],list[1]}
+            self.id = table.concat(idArr,":")
+            local  data = self.storage:open(self.id)
+            if data then
+                --    解析数据
+                local decodeData = self.encoder.decode(data)
+                self.data = self.serializer.deserialize(decodeData);
+            else
+                self.data = {}
+            end
         end
     else
         self.data = {}

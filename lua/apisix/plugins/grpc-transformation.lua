@@ -180,7 +180,24 @@ function _M.body_filter(conf, ctx)
         return
     end
     if status==301 then
-        ngx.arg[1] = ngx.unescape_uri(message)
+        local defaultRes = {
+            code = 99999,
+            msg = "系统异常",
+            data = {}
+        }
+        local decoded,err = core.json.decode(ngx.unescape_uri(message))
+        if not decoded then
+            core.log.error("failed to call json_decode data: ", err)
+            defaultRes.msg = "failed to json_decode response body"
+        end
+        defaultRes.code = decoded.code
+        defaultRes.msg = decoded.detail
+        local response, err = core.json.encode(defaultRes)
+        if not response then
+            core.log.error("failed to call json_encode data: ", err)
+            defaultRes.msg = "failed to json_encode response body"
+        end
+        ngx.arg[1] = response
         return
     end
     local proto_obj = ctx.proto_obj
