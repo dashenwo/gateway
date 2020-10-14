@@ -11,7 +11,7 @@ services:
     ports:
       - '80:9080'
       - '443:9443'
-    image: apisix-gateway
+    image: dashenwo/gateway
     volumes:
       - ./logs:/usr/local/apisix/logs
       - ./conf/config.yaml:/usr/local/apisix/conf/config.yaml

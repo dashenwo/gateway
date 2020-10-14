@@ -118,7 +118,7 @@ local function ifnil(value, default)
 end
 
 local defaults = {
-    prefix          = "sessions",
+    prefix          = "session",
     socket          = "",
     host            = "127.0.0.1",
     auth            = "",
@@ -128,15 +128,15 @@ local defaults = {
     uselocking      = enabled(true),
     port            = 6379,
     database        = 0,
-    connect_timeout = 0,
-    read_timeout    = 0,
-    send_timeout    = 0,
+    connect_timeout = 5000,
+    read_timeout    = 5000,
+    send_timeout    = 5000,
     spinlockwait    = 150,
     maxlockwait     = 30,
     pool = {
         name        = "",
-        timeout     = 0,
-        size        = 0,
+        timeout     = 60000,
+        size        = 1000,
         backlog     = 0,
     },
 }
@@ -145,7 +145,7 @@ if redis_cluster then
     defaults.cluster = {
         name            = "",
         dict            = "",
-        maxredirections = 0,
+        maxredirections = 5,
         nodes           = nil,
     }
 end
@@ -154,8 +154,8 @@ local storage = {}
 
 storage.__index = storage
 
-function storage.new(session)
-    local config  = session.redis         or defaults
+function storage.new(conf)
+    local config  = conf         or defaults
     local pool    = config.pool           or defaults.pool
     local cluster = config.cluster        or defaults.cluster
     local locking = ifnil(config.uselocking, defaults.uselocking)

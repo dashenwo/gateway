@@ -8,13 +8,15 @@ local plugin_name = "session-auth"
 local schema = {
     type = "object",
     properties = {
+        --存储驱动前缀
+        prefix = {type="string",minimum = 1, default = "sessions"},
         --加密字符串
         secret={type="string",minLength=1,},
         --前缀
         name = {type="string",minimum = 1, default = "session_id"},
-        --session过期事件
+        --session过期时间
         expire = {type = "integer", minimum = 1,default = 3600},
-        --redis请求超时事件
+        --redis请求超时时间
         timeout = {
             type = "integer", minimum = 1,
             default = 1000,
@@ -26,7 +28,7 @@ local schema = {
         },
         password = {type="string",minLength = 0,},
     },
-    required = {"name","expire","timeout","storage"},
+    required = {"name","prefix","expire","timeout","storage","secret"},
     dependencies = {
         storage = {
             oneOf = {
@@ -76,6 +78,9 @@ local _M = {
     name     = plugin_name,
     schema   = schema,
 }
+local messages = {
+    logout = {code=401,msg = "用户登录过期，请重新登录！"}
+}
 function _M.check_schema(conf)
     local ok, err = core.schema.check(schema, conf)
     if not ok then
@@ -83,10 +88,45 @@ function _M.check_schema(conf)
     end
     return true
 end
-
 do
     function _M.rewrite(conf, ctx)
-        core.log.error(core.json.encode(ngx.var))
+        local manager = require("apisix.lib.session-auth.manager")
+        local config = {
+            name        =       conf.name,
+            storage     =       conf.storage,
+            secret      =       conf.secret,
+        }
+        if conf.storage=="redis" then
+            config.redis = {
+                prefix = conf.prefix,
+                auth = conf.password,
+                connect_timeout = 1000,
+                read_timeout =1000,
+                send_timeout=1000,
+                pool = {
+                    name = "sessions",
+                    timeout = 60000,
+                    size = 1000,
+                    backlog=10
+                },
+            }
+            --集群模式
+            if #conf.hosts>1 then
+                config.redis.cluster = {
+                    name = plugin_name,
+                    dict = plugin_name,
+                    nodes = conf.hosts
+                }
+            else
+            end
+        elseif conf.storage=="memcache" then
+        end
+        local session = manager.start(config)
+        if not session.data.jwt then
+            return 200,messages.logout
+        end
+        -- 解析
+        session:save()
     end
 end  -- do
 return _M
