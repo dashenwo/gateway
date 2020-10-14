@@ -100,10 +100,13 @@ function session:save()
         local ttl = self.data.max_age
         -- 增加时间
         self.storage:ttl(self.id,ttl,true)
+        local list = split(self.id,":")
+        local idArr = {list[2],list[1]}
+        local id = self.encoder.encode(table.concat(idArr,"|"))
         -- 增加cookie时间
         self.cookie:set({
             key = self.name,
-            value = self.id,
+            value = id,
             path = "/",
             secure = true, httponly = true,
             expires = ngx.http_time(self.now+self.data.max_age),

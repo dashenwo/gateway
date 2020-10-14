@@ -161,6 +161,7 @@ function _M.header_filter(conf, ctx)
             ngx.header["grpc-status"] = nil
             ngx.header["grpc-message"] = nil
             ngx.header["Content-Length"] = nil
+            ngx.header["grpc-status-details-bin"] = nil
             --core.log.err(ctx.grpc_message);
             ngx.status = 200
         end
