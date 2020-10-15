@@ -28,50 +28,22 @@ local schema = {
             default = "redis",
             title ="存储驱动"
         },
+        hosts = {
+            type = "array",
+            items = {
+                type = "object",
+                properties = {
+                    ip = {type="string"},
+                    port = {type = "integer",minimum = 1, default = 6379,}
+                },
+                required = {"ip","port"},
+            },
+            minItems = 1
+        },
         password = {type="string",minLength = 0,title="存储驱动密码（如redis的密码）"},
+
     },
     required = {"name","prefix","timeout","storage","secret","must"},
-    dependencies = {
-        storage = {
-            oneOf = {
-                {
-                    properties = {
-                        storage = {
-                            enum = {"redis"},
-                        },
-                        hosts = {
-                            type = "array",
-                            items = {
-                                type = "object",
-                                properties = {
-                                    ip = {type="string"},
-                                    port = {type = "integer",minimum = 1, default = 6379,}
-                                },
-                                required = {"ip","port"},
-                            },
-                            minItems = 1
-                        }
-                    },
-                    required = {"mode"},
-                },
-                {
-                    properties = {
-                        storage = {
-                            enum = {"memcache"},
-                        },
-                        host = {
-                            type = "object",
-                            properties = {
-                                ip = {type="string"},
-                                port = {type = "integer",minimum = 1, default = 6379,}
-                            },
-                            required = {"ip","port"},
-                        },
-                    },
-                },
-            }
-        }
-    }
 }
 local _M = {
     version  = 0.1,

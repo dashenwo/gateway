@@ -78,7 +78,6 @@ local schema = {
         pb_option = {
             type = "array",
             items = { type="string", anyOf = pb_option_def },
-            minItems = 1,
         },
     },
     additionalProperties = true,
@@ -111,6 +110,7 @@ end
 
 function _M.check_schema(conf)
     local ok, err = core.schema.check(schema, conf)
+    core.log.error(core.json.encode(schema));
     if not ok then
         return false, err
     end
@@ -152,17 +152,21 @@ function _M.header_filter(conf, ctx)
     local headers = ngx.resp.get_headers()
     if headers["grpc-status"] ~= nil and headers["grpc-status"] ~= "0" then
         local http_status = status_rel[headers["grpc-status"]]
+        --获取到grpc的返回值后组装数据
+        ctx.grpc_status = 599
+        ctx.grpc_message = ngx.header["grpc-message"]
+        ngx.header["grpc-status"] = nil
+        ngx.header["grpc-message"] = nil
+        ngx.header["Content-Length"] = nil
+        ngx.header["grpc-status-details-bin"] = nil
+        --core.log.err(ctx.grpc_message);
         if http_status ~= nil then
-            ngx.status = http_status
+            if http_status==500 then
+                ngx.status = 200
+            else
+                ngx.status = http_status
+            end
         else
-            --获取到grpc的返回值后组装数据
-            ctx.grpc_status = 599
-            ctx.grpc_message = ngx.header["grpc-message"]
-            ngx.header["grpc-status"] = nil
-            ngx.header["grpc-message"] = nil
-            ngx.header["Content-Length"] = nil
-            ngx.header["grpc-status-details-bin"] = nil
-            --core.log.err(ctx.grpc_message);
             ngx.status = 200
         end
         return
