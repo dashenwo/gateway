@@ -19,7 +19,3 @@ ifeq ($(LUAROCKS_VER),luarocks 3.)
 else
 	luarocks install lua/rockspec/rockspec-1.0-1.rockspec --tree=lua/deps --only-deps --local
 endif
-
-.PHONY: docker
-docker:
-	docker build -t dashenwo/gateway .
